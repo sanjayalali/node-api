@@ -164,7 +164,7 @@ app.delete('/user/delete/type/:userType', async(req, res) => {
 
 
 
-app.listen(4000, () => 
+app.listen(process.env.PORT, () => 
     connectDB()
     .then((data) => console.log('Listening on 4000 http://localhost:4000/', data))
     .catch((err) => console.log(err))
