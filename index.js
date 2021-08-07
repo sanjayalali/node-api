@@ -1,172 +1,137 @@
 require("dotenv").config();
-const express = require('express');
+const express = require("express");
 
-//mongoose connection
-const connectDB = require('./connection');
+// mongoose connnection
+const connectDB = require("./connection");
 
-//mongoose model
-const userModel = require('./user');
+// mongoose model
+const userModel = require("./user");
 
 const app = express();
 
-//configuration
-
+// configuration
 app.use(express.json());
 
-// route:  /
-//description: to get all users
-//parameters: none
-app.get('/', async(req, res) => {
+// route:         /
+// description :  To get all user
+// parameter:     none
+app.get("/", async (req, res) => {
+  try {
+    const user = await userModel.find();
+    return res.json({ user });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
 
-    try{
+// route:         /user/type/:type
+// description :  To get all user based on type
+// parameter:     type
+app.get("/user/type/:type", async (req, res) => {
+  try {
+    const { type } = req.params;
 
-        const user = await userModel.find();
-        return res.json({user});
+    const user = await userModel.find({ userType: type });
 
-    } catch (error) {
-       return res.status(500).json({error : error.message});
+    if (!user) {
+      return res.json({ message: "No user found" });
     }
-    
+
+    return res.json({ user });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 });
 
+// route:         /user/:_id
+// description :  To get a user based on id
+// parameter:     _id
+app.get("/user/:_id", async (req, res) => {
+  try {
+    const { _id } = req.params;
+    const user = await userModel.findById(_id);
 
+    if (!user) {
+      return res.json({ message: "No user found" });
+    }
 
-// route:  /user/tyoe/:type
-//description: to get all users by type
-//parameters: type
-app.get('/user/type/:type', async(req, res) => {
-
-    try{
-        const { type } = req.params;
-        const user = await userModel.find({ userType: type });
-        
-        if(!user){
-            return res.json({message : 'no user found'});
-        }
-    
-        return res.json({user});
-    } catch (error) {
-        return res.status(500).json({error : error.message});
-     }
-    
-
+    return res.json({ user });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 });
 
+// route:         /user/new
+// description :  To add new user
+// parameter:     none
+// request body:  user object
+app.post("/user/new", async (req, res) => {
+  try {
+    const { newUser } = req.body;
 
-// route:  /user/:_id
-//description: to get all users by id
-//parameters: id
-app.get('/user/:_id', async(req, res) => {
+    await userModel.create(newUser);
 
-    try{
-        const { _id } = req.params;
-        const user = await userModel.findById( _id );
-        
-        if(!user){
-            return res.json({message : 'no user found'});
-        }
-    
-        return res.json({user});
-    } catch (error) {
-        return res.status(500).json({error : error.message});
-     }
-    
-
+    return res.json({ message: "User created" });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 });
 
+// route:         /user/update/:_id
+// description :  To add new user
+// parameter:     _id
+// request body:  user object
+app.put("/user/update/:_id", async (req, res) => {
+  try {
+    const { _id } = req.params;
+    const { userData } = req.body;
 
-// route:  /user/new
-//description: to add users
-//parameters: none
-//body: user Object
-app.post('/user/new', async(req, res) => {
+    const updateUser = await userModel.findByIdAndUpdate(
+      _id,
+      { $set: userData },
+      { new: true }
+    );
 
-    try{
-        const { newUser } = req.body;
-
-        await userModel.create(newUser);
-    
-        return res.json({ message: 'User created successfully' });
-
-    } catch (error) {
-        return res.status(500).json({error : error.message});
-     }
-
+    return res.json({ user: updateUser });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 });
 
+// route:         /user/delete/:_id
+// description :  To add new user
+// parameter:     _id
+// request body:  none
+app.delete("/user/delete/:_id", async (req, res) => {
+  try {
+    const { _id } = req.params;
 
-// route:  /user/update/:_id
-//description: to update user
-//parameters: _id
-//body: user object
+    await userModel.findByIdAndDelete(_id);
 
-app.put('/user/update/:_id', async(req, res) => {
-
-    try{
-        const { _id } = req.params;
-
-         const { userData } = req.body;
-
-        const updateUser = await userModel.findByIdAndUpdate(
-        _id, 
-        { $set: userData },
-        { new: true }
-        );
-
-        return res.json({ user: updateUser });
-
-    } catch (error) {
-        return res.status(500).json({error : error.message});
-     }
-    
+    return res.json({ message: "User deleted! 😈" });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 });
 
-// route:  /user/delete/:_id
-//description: to delete a user
-//parameters: _id
-//body: 
+// route:         /user/delete/type/:userType
+// description :  To add new user
+// parameter:     userType
+// request body:  none
+app.delete("/user/delete/type/:userType", async (req, res) => {
+  try {
+    const { userType } = req.params;
 
-app.delete('/user/delete/:_id', async(req, res) => {
+    await userModel.findOneAndDelete({ userType });
 
-    try{
-        const { _id } = req.params;
-
-        await userModel.findByIdAndDelete( _id );
-    
-            return res.json({ message: 'User deleted successfully' });
-
-    } catch (error) {
-        return res.status(500).json({error : error.message});
-     }
-
+    return res.json({ message: "User deleted! 😈" });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 });
 
-
-
-// route:  /user/delete/type/:userType
-//description: to delete users by type
-//parameters: userType
-//body: 
-
-app.delete('/user/delete/type/:userType', async(req, res) => {
-
-    try{
-        const { userType } = req.params;
-
-        await userModel.deleteMany({ userType });
-    
-            return res.json({ message: 'Users deleted successfully', userType });
-    } catch (error) {
-        return res.status(500).json({error : error.message});
-     }
-
-});
-
-
-
-app.listen(process.env.PORT, () => 
-    connectDB()
-    .then((data) => console.log('Listening on 4000 http://localhost:4000/', data))
-    .catch((err) => console.log(err))
+app.listen(process.env.PORT, () =>
+  connectDB()
+    .then((data) => console.log("Server is running 🚀"))
+    .catch((error) => console.log(error))
 );
-
